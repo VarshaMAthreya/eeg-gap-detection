@@ -23,7 +23,7 @@ warnings.simplefilter('ignore')
 plt.rcParams["figure.figsize"] = (5.5, 5)
 plt.rcParams['figure.dpi'] = 500
 plt.rc('xtick', labelsize=11)
-plt.rc('ytick', labelsize=11)
+plt.rc('ytick', labelsize=8)
 
 # %%Setting up stuff
 fig_loc = 'C:/Users/vmysorea/Desktop/PhD/GreenLightMeeting/Figures/'
@@ -35,7 +35,7 @@ subjlist = ['S273', 'S069', 'S072', 'S078', 'S088',
             'S104', 'S105', 'S259', 'S260', 'S268',
             'S269', 'S270', 'S271', 'S274', 'S277',
             'S279', 'S280', 'S281', 'S282', 'S284',
-            'S285', 'S288', 'S290',  'S303',
+            'S285', 'S288', 'S290', 'S303',
             'S305', 'S308', 'S310', 'S312', 'S337',
             'S339', 'S340', 'S341', 'S342', 'S344',
             'S345', 'S347', 'S352', 'S355', 'S358']
@@ -43,7 +43,7 @@ subjlist = ['S273', 'S069', 'S072', 'S078', 'S088',
 
 for subj in range(len(subjlist)):
     sub = subjlist[subj]
-    dat1 = io.loadmat(data_loc + sub + '_evoked(4chan)_ITC.mat', squeeze_me=True)
+    dat1 = io.loadmat(data_loc + sub + '_evoked(4chan)_ITC_BInc.mat', squeeze_me=True)
     dat1.keys()
     t = dat1['t1']  # For GDT and ITC
     t_full = dat1['t']
@@ -55,7 +55,6 @@ dat = dat[dat0]
 
 # Categorizing into different age groups
 
-
 def group_age(age):
     if age <= 35:
         return 'YNH'
@@ -63,7 +62,6 @@ def group_age(age):
         return 'MNH'
     else:
         return 'ONH'
-
 
 dat['age_group'] = dat['Age'].apply([group_age])
 # Grouping into three age groups, not sorting alphabetically
@@ -83,7 +81,7 @@ full32_all = []
 full64_all = []
 
 mat_agegroups = []
-picks = [3]  # Took off the Cs
+picks = [3]  #If considering only A32
 
 for age, groups in age_groups:
     group_gap16 = []  # Initialize lists for each condition and age group
@@ -98,7 +96,7 @@ for age, groups in age_groups:
 
     for index, column in groups.iterrows():
         subj = column['Subject']
-        dat = io.loadmat(data_loc + subj + '_evoked(4chan)_ITC.mat', squeeze_me=True)
+        dat = io.loadmat(data_loc + subj + '_evoked(4chan)_ITC_BInc.mat', squeeze_me=True)
         dat.keys()
         gap16 = dat['evoked_1'][picks]
         gap32 = dat['evoked_2'][picks]
@@ -162,62 +160,68 @@ for condition, evkds_all in conditions.items():
 # %% Subplots across conditions, with individual age plots
 
 # Define condition names
-# condition_names = { 0: 'Evoked - Gap 16 ms',
-    # 1: 'Evoked - Gap 32 ms',
-    # 2: 'Evoked - Gap 64 ms',
-    # 3: 'ITC 16 ms',
-    # 4: 'ITC 32 ms',
-    # 5: 'ITC 64 ms',
-    # 6: 'Onset - 16 ms',
-    # 7: 'Onset - 32 ms',
-    # 8: 'Onset - 64 ms'}
+condition_names = { 0: 'Evoked - Gap 16 ms',
+    1: 'Evoked - Gap 32 ms',
+    2: 'Evoked - Gap 64 ms',
+    3: 'ITC 16 ms',
+    4: 'ITC 32 ms',
+    5: 'ITC 64 ms',
+    6: 'Onset - 16 ms',
+    7: 'Onset - 32 ms',
+    8: 'Onset - 64 ms'}
 
-# # Define age group labels
-# age_group_labels = {'YNH': 'Young (<=35 y)',
-#                     'MNH': 'Middle (36-55 y)',
-#                     'ONH': 'Old (>=56 y)'}
+# Define age group labels
+age_group_labels = {'YNH': 'Young (<=35 y)',
+                    'MNH': 'Middle (36-55 y)',
+                    'ONH': 'Old (>=56 y)'}
 
-# cond_groups = [(0,1,2), (3,4,5)]
+cond_groups = [(0,1,2), (3,4,5)]
 
-# # Create a figure with 3 horizontal subplots
-# for cond in cond_groups:
-#     fig, axs = plt.subplots(3, 1, figsize=(4.5,4), sharex= True)
+# Color-blind friendly palette from seaborn
+sns.set_palette("bright")
 
-# # Iterate through age groups
-#     for age_group_index, age_group in enumerate(age_group_labels.keys()):
+# Create a figure with 3 horizontal subplots
+for cond in cond_groups:
+    fig, axs = plt.subplots(3, 1, figsize=(4.5,4), sharex= True)
+    
+# Iterate through age groups
+    for age_group_index, age_group in enumerate(age_group_labels.keys()):
 
-#         ax = axs[age_group_index]
-#         # N = age_groups['Subject'].count()
-#         ax.set_title(f'Age Group: {age_group_labels[age_group]}', size =10, pad =0)
+        ax = axs[age_group_index]
+        # N = age_groups['Subject'].count()
+        ax.set_title(f'Age Group: {age_group_labels[age_group]}')
 
-#         # Iterate through conditions
+        # Iterate through conditions
+        legend_text=[]
+        for condition in cond:
+            mean_age_group = mean_data[condition][age_group_index]
+            sem_age_group = sem_data[condition][age_group_index]
 
-#         for condition in cond:
-#             mean_age_group = mean_data[condition][age_group_index]
-#             sem_age_group = sem_data[condition][age_group_index]
+            condition_name = condition_names.get(condition, f'Condition {condition}')
+            
+            N = age_groups['age_group'].count()[age_group]
+            # Plot mean with SEM as shaded region
+            ax.plot(t, mean_age_group, label=f'{condition_name}', alpha=0.7)
+            ax.fill_between(t, mean_age_group - sem_age_group, mean_age_group + sem_age_group, alpha=0.3)
+            
+            legend_text.append(f"{age_group} (N={N})")
 
-#             condition_name = condition_names.get(condition, f'Condition {condition}')
+        if age_group_index == 0:
+            ax.legend(loc ='upper right',fontsize = 'xx-small' )
 
-#             # Plot mean with SEM as shaded region
-#             ax.plot(t, mean_age_group, label=f'{condition_name}')
-#             ax.fill_between(t, mean_age_group - sem_age_group, mean_age_group + sem_age_group, alpha=0.3)
+        # ax.set_ylabel()
+        # ax.set_ylim(-2,5.2)
+        # ax.set_xlim(-0.1,1.1)
+        ax.grid()
 
-#         if age_group_index == 0:
-#             ax.legend(loc ='upper right',fontsize = 'xx-small' )
+        fig.text(0, 0.5, 'Amplitude (\u03bcV)', va='center', rotation='vertical', fontsize=12)
+        plt.xlabel('Time (s)', fontsize =12)
+        # fig.suptitle(f'{condition_name}', size=16, y=1.001)
 
-#         # ax.set_ylabel()
-#         # ax.set_ylim(-2,5.2)
-#         # ax.set_xlim(-0.1,1.1)
-#         ax.grid()
-
-#         fig.text(-0.0001, 0.5, 'Amplitude (\u03bcV)', va='center', rotation='vertical', fontsize=12)
-#         plt.xlabel('Time (s)', fontsize =12)
-#         # fig.suptitle(f'{condition_name}', size=16, y=1.001)
-
-#     plt.tight_layout()
-#     plt.savefig(fig_loc + f'cond_{cond[0]}_{cond[1]}_1.png', dpi = 500)
+    plt.tight_layout()
+    # plt.savefig(fig_loc + f'cond_{cond[0]}_{cond[1]}_1.png', dpi = 500)
     # plt.close()
-    # plt.show()  # Show the plot
+    plt.show()  # Show the plot
 
 # %%## all three age groups in same subplot
 
@@ -232,13 +236,12 @@ condition_names = {0: 'Evoked - Gap 16 ms',
                    8: 'Onset - 64 ms'}
 
 # Color-blind friendly palette from seaborn
-sns.set_palette("colorblind")
+# sns.set_palette("Paired")
 
-# condition_colors = {
-#     3: sns.color_palette()[0],  # First color in the palette
-#     4: sns.color_palette()[1],  # Second color in the palette
-#     5: sns.color_palette()[2],  # Third color in the palette
-# }
+# age_colors = {
+#     'YNH': '#1f78b4',
+#     'MNH': '#6a3d9a',  # Second color in the palette
+#     'ONH': '#33a02c'}  # Third color in the palette
 
 # Define age group labels
 age_group_labels = {'YNH': 'Young (<36 y)', 'MNH': 'Middle (36-55 y)', 'ONH': 'Old (>55 y)'}
@@ -248,7 +251,7 @@ age_group_labels = {'YNH': 'Young (<36 y)', 'MNH': 'Middle (36-55 y)', 'ONH': 'O
 fig, axs = plt.subplots(3, 1, figsize=(6.5, 5), sharex=True)
 
 # Loop through conditions and plot in subplots
-for condition_index, condition in enumerate([0, 1, 2]):
+for condition_index, condition in enumerate([3, 4, 5]):
     ax = axs[condition_index]
     ax.set_title(condition_names[condition])
 
@@ -262,17 +265,17 @@ for condition_index, condition in enumerate([0, 1, 2]):
 
         # Plot mean with SEM as shaded region
         N = age_groups['age_group'].count()[age_group]
-
-        ax.plot(t, mean_age_group, label=age_group, alpha=0.7)
-        ax.fill_between(t, mean_age_group - sem_age_group,
-                        mean_age_group + sem_age_group, alpha=0.3)
+                
+        ax.plot(t, mean_age_group, label=age_group, alpha=0.7, linewidth=2)
+        ax.fill_between(t, mean_age_group - sem_age_group, mean_age_group + sem_age_group, alpha=0.2)
 
         legend_text.append(f"{age_group} (N={N})")
 
     if condition_index == 0:
-        ax.legend(labels=legend_text, loc='upper right')
+        ax.legend(labels=legend_text, loc='upper right', fontsize='xx-small')
 
-    ax.set_ylim(-0.2,0.55)
+    ax.set_ylim(0.02,0.08)
+    ax.set_xlim(-0.2,0.55)
     ax.grid()
 
 plt.xlabel('Time (s)', fontsize=12)
@@ -282,4 +285,4 @@ fig.tight_layout()
 # plt.subplots_adjust(wspace=0.1,hspace =0.1)
 plt.show()
 
-plt.savefig(fig_loc + 'Gaps_AcrossAges_A32wS291.png', dpi = 500, bbox_inches="tight")
+plt.savefig(fig_loc + 'ITC_AcrossAges_A32_1.png', dpi = 500, bbox_inches="tight")

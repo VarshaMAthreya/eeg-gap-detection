@@ -31,9 +31,7 @@ plt.tight_layout
 froot = 'D:/PhD/Data/MTB_EP - GDT, Binding, mTRF/GDT/'  # file location
 save_loc = ('D:/PhD/Stim_Analysis/GapDetection_EEG/AnalyzedFiles_Figures/GDT_matfiles/')
 
-subjlist = ['S308', 'S310', 'S312', 
-            'S339', 'S340', 'S341', 'S342', 'S344',
-            'S345', 'S347', 'S352', 'S355', 'S358'] # Load subject folder
+subjlist =  ['S305'] # Load subject folder
 condlist = [1, 2, 3]  # List of conditions- Here 3 GDs - 16, 32, 64 ms
 condnames = ['0.016 s', '0.032 s', '0.064 s']
 
@@ -228,14 +226,15 @@ for subj in subjlist:
     onset_16 = epochs_16.average(picks = picks)
     onset_32 = epochs_32.average(picks = picks)
     onset_64 = epochs_64.average(picks = picks)
-        
-    onsetP1_16 = onset_16.get_peak(ch_type='eeg', tmin=0.0, tmax=0.15,mode='pos', return_amplitude=True)
-    onsetP1_32 = onset_32.get_peak(ch_type='eeg', tmin=0.0, tmax=0.15,mode='pos', return_amplitude=True)
-    onsetP1_64 = onset_64.get_peak(ch_type='eeg', tmin=0.0, tmax=0.15,mode='pos', return_amplitude=True)
     
-    onsetP2_16 = onset_16.get_peak(ch_type='eeg', tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
-    onsetP2_32 = onset_32.get_peak(ch_type='eeg', tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
-    onsetP2_64 = onset_64.get_peak(ch_type='eeg', tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
+    #Get P1, P2 peaks for the onset     
+    # onsetP1_16 = onset_16.get_peak(ch_type='eeg', tmin=0.0, tmax=0.15,mode='pos', return_amplitude=True)
+    # onsetP1_32 = onset_32.get_peak(ch_type='eeg', tmin=0.0, tmax=0.15,mode='pos', return_amplitude=True)
+    # onsetP1_64 = onset_64.get_peak(ch_type='eeg', tmin=0.0, tmax=0.15,mode='pos', return_amplitude=True)
+    
+    # onsetP2_16 = onset_16.get_peak(ch_type='eeg', tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
+    # onsetP2_32 = onset_32.get_peak(ch_type='eeg', tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
+    # onsetP2_64 = onset_64.get_peak(ch_type='eeg', tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
 
     # OnsetResponse_All3 = onset_16.plot(picks=picks, titles='Onset - ' + subj)
     # OnsetResponse_All3 = onset_32.plot(picks=picks, titles='Onset - ' + subj)
@@ -243,8 +242,8 @@ for subj in subjlist:
     
     # OnsetResponse_All3.savefig(save_loc + 'OnsetResponse_All3_.png' + subj, dpi=300)
     
-    mat_ids1 = dict(onsetP1_16=onsetP1_16, onsetP1_32=onsetP1_32, onsetP1_64=onsetP1_64,
-                    onsetP2_16=onsetP2_16, onsetP2_32=onsetP2_32, onsetP2_64=onsetP2_64)
+    # mat_ids1 = dict(onsetP1_16=onsetP1_16, onsetP1_32=onsetP1_32, onsetP1_64=onsetP1_64,
+    #                 onsetP2_16=onsetP2_16, onsetP2_32=onsetP2_32, onsetP2_64=onsetP2_64)
 
 # %% Creating manual events to add the responses of each gap size
     #Triggers set after each gap, remember!!!
@@ -263,29 +262,31 @@ for subj in subjlist:
     
     # Epoching
     
-    epochs_1 = mne.Epochs(raw, eves_manual[:], event_id=[1], baseline=(-0.1,0), proj=True,tmin=-0.1, tmax=0.55, reject=dict(eeg=150e-6), picks=picks)
-    epochs_2 = mne.Epochs(raw, eves_manual, event_id=[2], baseline=(-0.1,0), proj=True,tmin=-0.1, tmax=0.55, reject=dict(eeg=150e-6), picks=picks)
-    epochs_3 = mne.Epochs(raw, eves_manual, event_id=[3], baseline=(-0.1,0), proj=True,tmin=-0.1, tmax=0.55, reject=dict(eeg=150e-6), picks=picks)
+    epochs_1 = mne.Epochs(raw, eves_manual[:], event_id=[1], baseline=(-0.2,-0.07), proj=True,tmin=-0.2, tmax=0.55, reject=dict(eeg=150e-6), picks=picks)
+    epochs_2 = mne.Epochs(raw, eves_manual, event_id=[2], baseline=(-0.2,-0.07), proj=True,tmin=-0.2, tmax=0.55, reject=dict(eeg=150e-6), picks=picks)
+    epochs_3 = mne.Epochs(raw, eves_manual, event_id=[3], baseline=(-0.2,-0.07), proj=True,tmin=-0.2, tmax=0.55, reject=dict(eeg=150e-6), picks=picks)
 
+    ###Baseline was (-0.1,0) -- Changed it for better responses possibly 
 # Averaging
     
-    evoked_1 = epochs_1.average(picks =  picks)
-    evoked_2 = epochs_2.average(picks =  picks)
+    evoked_1 = epochs_1.average(picks = picks)
+    evoked_2 = epochs_2.average(picks = picks)
     evoked_3 = epochs_3.average(picks = picks)
     
-    gapP1_16 = evoked_1.get_peak(ch_type='eeg', tmin=0.0, tmax=0.15,mode='pos', return_amplitude=True)
-    gapP1_32 = evoked_2.get_peak(ch_type='eeg', tmin=0.0, tmax=0.15,mode='pos', return_amplitude=True)
-    gapP1_64 = evoked_3.get_peak(ch_type='eeg', tmin=0.0, tmax=0.15,mode='pos', return_amplitude=True)
+    ## Get P1, P2 peaks for the gaps 
+    # gapP1_16 = evoked_1.get_peak(ch_type='eeg', tmin=0.0, tmax=0.15,mode='pos', return_amplitude=True)
+    # gapP1_32 = evoked_2.get_peak(ch_type='eeg', tmin=0.0, tmax=0.15,mode='pos', return_amplitude=True)
+    # gapP1_64 = evoked_3.get_peak(ch_type='eeg', tmin=0.0, tmax=0.15,mode='pos', return_amplitude=True)
     
-    gapP2_16 = evoked_1.get_peak(ch_type='eeg', tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
-    gapP2_32 = evoked_2.get_peak(ch_type='eeg', tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
-    gapP2_64 = evoked_3.get_peak(ch_type='eeg', tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
+    # gapP2_16 = evoked_1.get_peak(ch_type='eeg', tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
+    # gapP2_32 = evoked_2.get_peak(ch_type='eeg', tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
+    # gapP2_64 = evoked_3.get_peak(ch_type='eeg', tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
     
-    mat_ids2 = dict(gapP1_16=gapP1_16, gapP1_32=gapP1_32, gapP1_64=gapP1_64,
-                   gapP2_16=gapP2_16, gapP2_32=gapP2_32, gapP2_64=gapP2_64)
+    # mat_ids2 = dict(gapP1_16=gapP1_16, gapP1_32=gapP1_32, gapP1_64=gapP1_64,
+    #                gapP2_16=gapP2_16, gapP2_32=gapP2_32, gapP2_64=gapP2_64)
     
-    gap_ids = mat_ids2|mat_ids1
-    savemat(save_loc + subj + '_peaksA32.mat', gap_ids)   
+    # gap_ids = mat_ids2|mat_ids1
+    # savemat(save_loc + subj + '_peaksA32.mat', gap_ids)   
     
     
     #Plotting 
@@ -294,27 +295,25 @@ for subj in subjlist:
     # evoked_3.plot(ylim=dict(eeg=[-1.1, 2.5]), titles='GDT_64ms - ' + subj)
     
     # evokeds = dict(GDT_16ms=evoked_1, GDT_32ms=evoked_2, GDT_64ms=evoked_3)
-    # mne.viz.plot_compare_evokeds(evokeds, combine='mean', title='GDT - ' +subj, picks=picks)
+    # mne.viz.plot_compare_evokeds(evokeds, combine='mean', title='GDT - ' +subj, picks='A32')
     
-    
-
 # %% Compute evoked response using ITC
 
 # Save location for all analyzed ITC files and figs across ages    
     # ITC1 - 16 ms
-    # freqs = np.arange(1., 14., 1.)
-    # n_cycles = freqs * 0.2
+    freqs = np.arange(1., 14., 1.)
+    n_cycles = freqs * 0.2
     
-    # power_1, itc_1 = tfr_multitaper(epochs_1, freqs, n_cycles, picks=picks,
-    #                                 time_bandwidth=4.0, n_jobs=-1, return_itc=True)
+    power_1, itc_1 = tfr_multitaper(epochs_1, freqs, n_cycles, picks=picks,
+                                    time_bandwidth=4.0, n_jobs=-1, return_itc=True)
     
     # # ITC2 - 32 ms
-    # power_2, itc_2 = tfr_multitaper(epochs_2, freqs, n_cycles, picks=picks,
-    #                                 time_bandwidth=4.0, n_jobs=-1, return_itc=True)
+    power_2, itc_2 = tfr_multitaper(epochs_2, freqs, n_cycles, picks=picks,
+                                    time_bandwidth=4.0, n_jobs=-1, return_itc=True)
     
     # # ITC3 - 64 ms
-    # power_3, itc_3 = tfr_multitaper(epochs_3, freqs, n_cycles, picks=picks,
-    #                                 time_bandwidth=4.0, n_jobs=-1, return_itc=True)
+    power_3, itc_3 = tfr_multitaper(epochs_3, freqs, n_cycles, picks=picks,
+                                    time_bandwidth=4.0, n_jobs=-1, return_itc=True)
     
     # Plotting ITC and Power plots for the three conditions    
     # Cond 1
@@ -335,26 +334,25 @@ for subj in subjlist:
     # Saving ITC measures into mat file -- Taking the mean across the third row
     #Saving evokeds, just in case I need it for overall plotting -- Might make a difference 
         
-    # a = onset_16.get_data(picks)
-    # b = onset_32.get_data(picks)
-    # c = onset_64.get_data(picks)
-    # d = evoked_1.get_data(picks)
-    # e = evoked_2.get_data(picks)
-    # f = evoked_3.get_data(picks)
-    # x = (itc_1.data).mean(axis=1)    #Mean of the 14 freqs
-    # y = (itc_2.data).mean(axis=1)
-    # z = (itc_3.data).mean(axis=1)
+    a = onset_16.get_data(picks)
+    b = onset_32.get_data(picks)
+    c = onset_64.get_data(picks)
+    d = evoked_1.get_data(picks)
+    e = evoked_2.get_data(picks)
+    f = evoked_3.get_data(picks)
+    x = (itc_1.data).mean(axis=1)    #Mean of the 14 freqs
+    y = (itc_2.data).mean(axis=1)
+    z = (itc_3.data).mean(axis=1)
     
-    # t=epochs_16.times
-    # t1=epochs_1.times
-    # mat_ids = dict(onset_16=a,onset_32=b,onset_64=c,evoked_1=d,evoked_2=e,evoked_3=f, fs=4096, t=t, t1=t1,
-    #                itc1=x, itc2=y, itc3=z, freqs=freqs, n_channels=picks, n_cycles=n_cycles)
+    t=epochs_16.times
+    t1=epochs_1.times
+    mat_ids = dict(onset_16=a,onset_32=b,onset_64=c,evoked_1=d,evoked_2=e,evoked_3=f, fs=4096, t=t, t1=t1,
+                    itc1=x, itc2=y, itc3=z, freqs=freqs, n_channels=picks, n_cycles=n_cycles)
     
-    # savemat(save_loc + subj + '_evoked(4chan)_ITC.mat', mat_ids)
+    savemat(save_loc + subj + '_evoked(4chan)_ITC_BInc.mat', mat_ids)
     
     
     print('WOOOHOOOO! Saved ' + subj)
         
-    del epochs_16,epochs_32,epochs_64, epochs_1, epochs_2,epochs_3,onset_16, onset_32,onset_64,
-    evoked_1,evoked_2,evoked_3, eves_manual, eves
-    # itc_1,itc_2,itc_3
+    # del epochs_16,epochs_32,epochs_64, epochs_1, epochs_2,epochs_3,onset_16, onset_32,onset_64,
+    # evoked_1,evoked_2,evoked_3, eves_manual, eves, itc_1,itc_2,itc_3
