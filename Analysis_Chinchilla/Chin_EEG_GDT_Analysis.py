@@ -29,16 +29,16 @@ plt.rcParams["figure.figsize"] = (5.5, 5)
 plt.tight_layout
 
 # %% Loading subjects, reading data, mark bad channels
-froot = 'D:/PhD/Data/Chin_Data/LightSedation/'  # file location
-save_loc = ('C:/Users/vmysorea/Desktop/PhD/Stim_Analysis/GapDetection_EEG/Analysis_Chinchilla/')
+froot = 'F:/PhD/Data/Chin_Data/LightSedation/'  # file location
+save_loc = 'F:/PhD/Data/Chin_Data/AnalyzedGDT_matfiles/'
 
-subjlist = ['Q351']  # Load subject folder
+subjlist = ['Q412']  # Load subject folder
 condlist = [1]
 
 for subj in subjlist:
     # Load data and read event channel
     fpath = froot + subj + '/'
-    bdfs = fnmatch.filter(os.listdir(fpath), subj +'_LightSedation_GDT_64ms*.bdf')
+    bdfs = fnmatch.filter(os.listdir(fpath), subj +'_LightSedation_GDT_16ms*.bdf')
 
     # Load data and read event channel
     rawlist = []
@@ -62,7 +62,7 @@ for subj in subjlist:
     # raw, eves = raw.resample(4096, events=eves)
 
     # To check and mark bad channels
-    raw.plot(duration=25.0, n_channels=41, scalings=dict(eeg=100e-6))
+    # raw.plot(duration=25.0, n_channels=41, scalings=dict(eeg=100e-6))
     
 #%% Bad channels for each subject
   
@@ -80,7 +80,7 @@ for subj in subjlist:
        raw.info['bads'].append('A12')
 
 # %% Filtering
-    raw.filter(1., 40.)
+    raw.filter(5., 35.)
     raw.info
     # raw.plot(duration=25.0, n_channels=41, scalings=dict(eeg=100e-6))
 
@@ -89,7 +89,7 @@ for subj in subjlist:
     epochs = mne.Epochs(raw, eves, event_id=[1], baseline=(-0.3, 0), proj=True,tmin=-0.3, tmax=2.5, reject=dict(eeg=200e-6))
     t=epochs.times
     evoked = epochs.average()
-    evoked.plot(titles='Onset - ' + subj)
+    # evoked.plot(titles='Onset - ' + subj)
     
 #%% New paradigm with only one gap per trial 
     
@@ -126,10 +126,10 @@ for subj in subjlist:
     
     ### Saving mat files
        
-    mat_ids = dict(ep_mastoid = ep_mastoid, ep_vertex = ep_vertex, ep_ground=ep_ground, ep_all = ep_all, ep_mean =ep_mean, 
-                   ep_sem = ep_sem, ep_subderm = ep_subderm, ep_mean_subderm = ep_mean_subderm, ep_sem_subderm = ep_sem_subderm,
-                   picks=picks, t=t) 
-    savemat(save_loc + subj + '_64ms.mat', mat_ids)
+    # mat_ids = dict(ep_mastoid = ep_mastoid, ep_vertex = ep_vertex, ep_ground=ep_ground, ep_all = ep_all, ep_mean =ep_mean, 
+    #                ep_sem = ep_sem, ep_subderm = ep_subderm, ep_mean_subderm = ep_mean_subderm, ep_sem_subderm = ep_sem_subderm,
+    #                picks=picks, t=t) 
+    # savemat(save_loc + subj + '_16ms.mat', mat_ids)
 
 #%% Creating events for each gap (16, 32, 64 ms) -- When each trial is tone +gap1+tone+gap2+tone+gap3
     
