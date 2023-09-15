@@ -93,61 +93,61 @@ for subj in range(len(subjlist)):
 #%% Saving GDT -- P1, P2 - amp and latencies for the onsets, and gap responses
 
 #Saving only one max peak from 0-0.3 seconds -- for gap evoked and ITC
-t1_start, t1_end = -0.1, 0.3
+# t1_start, t1_end = -0.1, 0.3
 
-gap_results = {}
+# gap_results = {}
 
-evkds_all = {'gap16':evk16,
-             'gap32':evk32,
-             'gap64':evk64,
-             'itc16':itc16,
-             'itc32':itc32,
-             'itc64':itc64}
+# evkds_all = {'gap16':evk16,
+#              'gap32':evk32,
+#              'gap64':evk64,
+#              'itc16':itc16,
+#              'itc32':itc32,
+#              'itc64':itc64}
 
-# Loop through conditions
-for condition, evkds in evkds_all.items():
-    peak = []
-    latency = []
+# # Loop through conditions
+# for condition, evkds in evkds_all.items():
+#     peak = []
+#     latency = []
         
-    # Iterate through each evoked dataset
-    for evkd in evkds:
-        # Find indices corresponding to the time slots
-        t1_indices = np.where((t >= t1_start) & (t <= t1_end))[0]
+#     # Iterate through each evoked dataset
+#     for evkd in evkds:
+#         # Find indices corresponding to the time slots
+#         t1_indices = np.where((t >= t1_start) & (t <= t1_end))[0]
         
-        # Extract data within the time slots
-        data_t1 = evkd[t1_indices]
+#         # Extract data within the time slots
+#         data_t1 = evkd[t1_indices]
       
-        # Find the index corresponding to the peak value in each time slot
-        peak_index_t1 = t1_indices[data_t1.argmax()]
+#         # Find the index corresponding to the peak value in each time slot
+#         peak_index_t1 = t1_indices[data_t1.argmax()]
        
-        # Ensure the peak picked is positive, if not, find the closest positive peak!
-        if data_t1.max() < 0:
-            nearest_positive_index = t1_indices[(data_t1 > 0).argmax()] if (data_t1 > 0).any() else -1
-            if nearest_positive_index != -1:
-                peak_value_t1 = data_t1[nearest_positive_index]
-                peak_latency_t1 = t[nearest_positive_index]
-            else:
-                # No positive values found, set values to None or a suitable default
-                peak_value_t1 = np.NAN
-                peak_latency_t1 = np.NAN
-        else:
-            # Peak value is positive
-            peak_value_t1 = data_t1.max() #Get peak amplitude
-            peak_latency_t1 = t[peak_index_t1]     #Get latency in s from the index
+#         # Ensure the peak picked is positive, if not, find the closest positive peak!
+#         if data_t1.max() < 0:
+#             nearest_positive_index = t1_indices[(data_t1 > 0).argmax()] if (data_t1 > 0).any() else -1
+#             if nearest_positive_index != -1:
+#                 peak_value_t1 = data_t1[nearest_positive_index]
+#                 peak_latency_t1 = t[nearest_positive_index]
+#             else:
+#                 # No positive values found, set values to None or a suitable default
+#                 peak_value_t1 = np.NAN
+#                 peak_latency_t1 = np.NAN
+#         else:
+#             # Peak value is positive
+#             peak_value_t1 = data_t1.max() #Get peak amplitude
+#             peak_latency_t1 = t[peak_index_t1]     #Get latency in s from the index
         
-        peak.append(peak_value_t1)
-        latency.append(peak_latency_t1)
+#         peak.append(peak_value_t1)
+#         latency.append(peak_latency_t1)
        
-    # Store results in the dictionary
-    gap_results[condition] = {'subject':subjlist, 
-                              'peak': peak,
-                              'latency': latency,
-                              'channels':chans}
+#     # Store results in the dictionary
+#     gap_results[condition] = {'subject':subjlist, 
+#                               'peak': peak,
+#                               'latency': latency,
+#                               'channels':chans}
     
 ### Saving P1 and P2 responses  for gap responses and ITC
 
-tP1_start, tP1_end = -0.1, 0.15
-tP2_start, tP2_end = 0.15, 0.3
+tP1_start, tP1_end = -0.1, 0.09
+tP2_start, tP2_end = 0.1, 0.3
 
 gap_results_bothpeaks = {}
 
@@ -226,8 +226,8 @@ for condition, evkds in evkds_all_1.items():
 
 ##Saving evoked onset responses -- for the full duration  
 
-tP1_start, tP1_end = 0, 0.15
-tP2_start, tP2_end = 0.15, 0.3
+tP1_start, tP1_end = 0, 0.09
+tP2_start, tP2_end = 0.1, 0.3
 
 onset_results = {}
 
@@ -302,9 +302,11 @@ for condition, evkds in evkds_all_2.items():
                                 'P2_latency': P2_latency,
                                 'channels':chans}
 
-GDT_results = onset_results | gap_results | gap_results_bothpeaks #Merging the two dictionaries 
+# gap_results |
 
-savemat(data_loc + 'GDT_Evoked_ITC_4chan_-0.1-0.3_NewBaseline.mat',GDT_results)
+GDT_results = onset_results |  gap_results_bothpeaks #Merging the two dictionaries 
+
+savemat(data_loc + 'GDT_Evoked_ITC_4chan_-0.1-0.3_NewBaseline_1.mat',GDT_results)
 
 ###Checking if the manual peak picking is similar to the MNE peak picking -- Verified it is right 
 # info = mne.create_info(ch_names=['A32'], sfreq=4096, ch_types='eeg', verbose=None)
