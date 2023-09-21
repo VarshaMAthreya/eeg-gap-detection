@@ -8,7 +8,7 @@ Created on Wed Apr 19 14:46:03 2023
 
 import sys
 sys.path.append('C:/Users/vmysorea/Documents/mne-python/')
-sys.path.append('C:/Users/vmysorea/Documents/ANLffr/')
+sys.path.append('C:/Users/vmysorea/Documents/ANLffr-master/')
 import warnings
 import mne
 import numpy as np
@@ -29,16 +29,17 @@ plt.rcParams["figure.figsize"] = (5.5, 5)
 plt.tight_layout
 
 # %% Loading subjects, reading data, mark bad channels
-froot = 'D:/PhD/Data/Chin_Data/LightSedation/'  # file location
-save_loc = 'D:/PhD/Data/Chin_Data/AnalyzedGDT_matfiles/'
+froot = 'F:/PhD/Data/Chin_Data/LightSedation/'  # file location
+save_loc = 'F:/PhD/Data/Chin_Data/AnalyzedGDT_matfiles/'
 
 subjlist = ['Q351']  # Load subject folder
 condlist = [1]
+cond = ['64ms']
 
 for subj in subjlist:
     # Load data and read event channel
     fpath = froot + subj + '/'
-    bdfs = fnmatch.filter(os.listdir(fpath), subj +'_LightSedation_GDT_32ms*.bdf')
+    bdfs = fnmatch.filter(os.listdir(fpath), subj +'_LightSedation_GDT_16ms*.bdf')
 
     # Load data and read event channel
     rawlist = []
@@ -60,7 +61,7 @@ for subj in subjlist:
     raw.info['bads'].append('A27') 
     raw.info['bads'].append('A20') 
     raw.info['bads'].append('A17')
-    raw.info['bads'].append('EXG5') 
+    # raw.info['bads'].append('EXG5') 
     
     # raw, eves = raw.resample(4096, events=eves)
 
@@ -82,56 +83,105 @@ for subj in subjlist:
         raw.info['bads'].append('A21')
 
 # %% Filtering
-    raw.filter(1., 30.)
+    raw.filter(2, 20.)
     raw.info
     # raw.plot(duration=25.0, n_channels=41, scalings=dict(eeg=100e-6))
 
-# %% Plotting Onset responses
+# %% Plotting responses for the entire 2 second duration 
 
-    epochs = mne.Epochs(raw, eves, event_id=[1], baseline=(-0.3, 0), proj=True,tmin=-0.3, tmax=2.5, reject=dict(eeg=200e-6))
-    t=epochs.times
+    picks = (13, 14, 15, 28, 29, 30)
+             
+    epochs = mne.Epochs(raw, eves, event_id=[1], baseline=(-0.3, 0), proj=True,tmin=-0.3, tmax=2.5, 
+                        reject=dict(eeg=200e-6))
     evoked = epochs.average()
-    # evoked.plot(titles='Onset - ' + subj)
+    # evoked.plot(titles='2-25 Hz - ' + subj)
+     
+### Evoked responses for the gaps -- New paradigm with only one gap per trial 
+    epochs_gap = mne.Epochs(raw, eves, event_id=[1], baseline=(0.8, 0.87), proj=True,tmin=0.8, tmax=2.1, 
+                        reject=dict(eeg=200e-6))
+    evoked_gap = epochs_gap.average()
+    # evoked_gap.plot(titles='2-25 Hz - ' + subj)
+
     
-#%% New paradigm with only one gap per trial 
+#%% Plotting for onset, gap for EEG cap and subdermal electrodes 
     
-    t=epochs[0].times
-    picks = (6, 7, 8,21, 22, 23)
+    t_full=epochs[0].times
+    # picks = (6, 7, 8,21, 22, 23)
     # picks = (1, 11, 12, 13, 7,6,22,21)
-    all_channels = (np.arange(1,32))
+    # all_channels = (np.arange(1,32))
     
-    #Onset
+    #Full duration -- Onset and response to gap 
     ep_mastoid = epochs.get_data()[:,35,:] #Mastoid -EXG3
     ep_vertex = epochs.get_data()[:,36,:] #Vertex -EXG4
     ep_ground = epochs.get_data()[:,37,:] #Ground - EXG5
+    
+    ep_subderm = -ep_vertex + ep_mastoid #Inverting mastoid and non-inverting vertex 
+    ep_mean_subderm = ep_subderm.mean(axis=0)
+    ep_sem_subderm = ep_subderm.std(axis=0) / np.sqrt(ep_subderm.shape[0])
+    
     ep_all = evoked.data[picks,:]
     ep_mean =ep_all.mean(axis=0)
     ep_sem = ep_all.std(axis=0) / np.sqrt(ep_all.shape[0])
 
-    ep_subderm = -ep_vertex + ep_mastoid #Inverting mastoid and non-inverting vertex 
-    ep_mean_subderm = ep_subderm.mean(axis=0)
-    ep_sem_subderm = ep_subderm.std(axis=0) / np.sqrt(ep_subderm.shape[0])
-
+    #Plotting subdermal and EEG cap 
+    
     # plt.plot(t, ep_mean_subderm, label='Subdermal electrode')
     # plt.fill_between(t, ep_mean_subderm - ep_sem_subderm,
     #                       ep_mean_subderm + ep_sem_subderm,alpha=0.5)
-    plt.plot(t, ep_mean, label = 'EEG Cap' + str(picks))
-    plt.fill_between(t, ep_mean - ep_sem,
+    plt.plot(t_full, ep_mean, label = '64 ms' + str(picks))
+    plt.fill_between(t_full, ep_mean - ep_sem,
                           ep_mean + ep_sem,alpha=0.5)
     plt.xlim(-0.1, 2.1)
     #plt.xticks(ticks= [-2, 0, 2, 4, 6, 8, 10, 12, 14])
-    plt.title('Q428 (YNH) - Light Sedation : GDT- 64 ms')
+    # plt.title('Q428 (YNH) - Light Sedation : GDT- 64 ms')
     plt.legend()
     plt.show()
     
     # plt.savefig(save_loc + 'Q410_16ms.png', dpi=300)
     
-    ### Saving mat files
+### Plotting only gap responses 
+
+    t=epochs_gap[0].times
+    # picks = (6, 7, 8,21, 22, 23)
+    # picks = (1, 11, 12, 13, 7,6,22,21)
+    # all_channels = (np.arange(1,32))
+    
+    #Response to gaps -- Subdermal 
+    gap_mastoid = epochs_gap.get_data()[:,35,:] #Mastoid -EXG3
+    gap_vertex = epochs_gap.get_data()[:,36,:] #Vertex -EXG4
+    gap_ground = epochs_gap.get_data()[:,37,:] #Ground - EXG5
+    
+    gap_subderm = -gap_vertex + gap_mastoid #Inverting mastoid and non-inverting vertex 
+    gap_mean_subderm = gap_subderm.mean(axis=0)
+    gap_sem_subderm = gap_subderm.std(axis=0) / np.sqrt(gap_subderm.shape[0])
+    
+    #Response to gaps -- EEG cap 
+    gap_all = evoked_gap.data[picks,:]
+    gap_mean =gap_all.mean(axis=0)
+    gap_sem = gap_all.std(axis=0) / np.sqrt(gap_all.shape[0])
+    
+    #Plotting subdermal and EEG cap electrodes 
+    # plt.plot(t, gap_mean_subderm, label='Subdermal electrode')
+    # plt.fill_between(t, gap_mean_subderm - gap_sem_subderm,
+    #                       gap_mean_subderm + gap_sem_subderm,alpha=0.5)
+    plt.plot(t, gap_mean, label = '64 ms' + str(picks))
+    plt.fill_between(t, gap_mean - gap_sem,
+                          gap_mean + gap_sem,alpha=0.5)
+    # plt.xlim(0.9, 2)
+    #plt.xticks(ticks= [-2, 0, 2, 4, 6, 8, 10, 12, 14])
+    # plt.title('Q428 (YNH) - Light Sedation : GDT- 64 ms')
+    plt.legend()
+    plt.show()
+    
+#%% Saving mat files
        
-    mat_ids = dict(ep_mastoid = ep_mastoid, ep_vertex = ep_vertex, ep_ground=ep_ground, ep_all = ep_all, ep_mean =ep_mean, 
-                    ep_sem = ep_sem, ep_subderm = ep_subderm, ep_mean_subderm = ep_mean_subderm, ep_sem_subderm = ep_sem_subderm,
-                    picks=picks, t=t) 
-    savemat(save_loc + subj + '_32ms.mat', mat_ids)
+    # mat_ids = dict(ep_mastoid = ep_mastoid, ep_vertex = ep_vertex, ep_ground=ep_ground, ep_all = ep_all, ep_mean =ep_mean, 
+    #                 ep_sem = ep_sem, ep_subderm = ep_subderm, ep_mean_subderm = ep_mean_subderm, ep_sem_subderm = ep_sem_subderm,
+    #                 picks=picks, t=t) 
+    # savemat(save_loc + subj + '_32ms.mat', mat_ids)
+
+#%%% Creating events to get baselined evoked responses to the gap when the stim = tone+gap+tone
+
 
 #%% Creating events for each gap (16, 32, 64 ms) -- When each trial is tone +gap1+tone+gap2+tone+gap3
     
