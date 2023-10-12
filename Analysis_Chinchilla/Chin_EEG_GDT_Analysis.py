@@ -32,13 +32,13 @@ plt.tight_layout
 froot = 'D:/PhD/Data/Chin_Data/LightSedation/'  # file location
 save_loc = 'D:/PhD/Data/Chin_Data/AnalyzedGDT_matfiles/'
 
-subjlist = ['Q351']  # Load subject folder
+subjlist = ['Q364']  # Load subject folder
 condlist = [1]
 
 for subj in subjlist:
     # Load data and read event channel
     fpath = froot + subj + '/'
-    bdfs = fnmatch.filter(os.listdir(fpath), subj +'_LightSedation_GDT_32ms*.bdf')
+    bdfs = fnmatch.filter(os.listdir(fpath), subj +'_LightSedation_ABR.bdf')
 
     # Load data and read event channel
     rawlist = []
@@ -62,10 +62,10 @@ for subj in subjlist:
     raw.info['bads'].append('A17')
     raw.info['bads'].append('EXG5') 
     
-    # raw, eves = raw.resample(4096, events=eves)
+    raw, eves = raw.resample(32000, events=eves)
 
     # To check and mark bad channels
-    # raw.plot(duration=25.0, n_channels=41, scalings=dict(eeg=100e-6))
+    raw.plot(duration=25.0, n_channels=41, scalings=dict(eeg=100e-6))
     
 #%% Bad channels for each subject
   
@@ -82,8 +82,8 @@ for subj in subjlist:
         raw.info['bads'].append('A21')
 
 # %% Filtering
-    raw.filter(1., 30.)
-    raw.info
+    a = raw.filter(65., 8000., filter_length='10ms', method='iir')
+    a.info
     # raw.plot(duration=25.0, n_channels=41, scalings=dict(eeg=100e-6))
 
 # %% Plotting Onset responses

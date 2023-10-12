@@ -303,7 +303,6 @@ for condition, evkds in evkds_all_2.items():
                                 'channels':chans}
 
 # gap_results |
-
 GDT_results = onset_results |  gap_results_bothpeaks #Merging the two dictionaries 
 
 savemat(data_loc + 'GDT_Evoked_ITC_4chan_-0.1-0.3_NewBaseline_1.mat',GDT_results)
@@ -318,6 +317,24 @@ savemat(data_loc + 'GDT_Evoked_ITC_4chan_-0.1-0.3_NewBaseline_1.mat',GDT_results
 
 # onset_16 = mne.EvokedArray(onset16, info, tmin=t[0])
 # onset_16.get_peak(ch_type=None, tmin=0.15, tmax=0.3,mode='pos', return_amplitude=True)
+
+
+#%%%## Saving steady state to ensure input to SVM is the same as binding EEG input 
+
+t1 = t>=0.3
+t2 = t<=0.5
+t3 = np.array([t2[i] and t1[i] for i in range(len(t1))])    #Before gap
+
+SS16 = (evk16[:,t3]).mean(axis=1)
+SS32 = (evk32[:,t3]).mean(axis=1)
+SS64 = (evk64[:,t3]).mean(axis=1)
+
+plt.bar(('16','32', '64'), (SS16.mean(axis=0), SS32.mean(axis=0), SS64.mean()))
+plt.show()
+
+mat_id = dict(sub=subjlist,SS16=SS16, SS32=SS32,SS64=SS64)
+
+savemat(data_loc + 'AllSubj_GDTSS(4chan)_1-40Hz_1sec(N=39).mat', mat_id)
 
 #%%Plotting -- Manual 
 # Plot entire duration (Onsets) - All subjects
