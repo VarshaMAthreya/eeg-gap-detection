@@ -92,6 +92,9 @@ for subj in subjlist:
         
     if subj == ['Q426']:
         raw.info['bads'].append('A5')
+        
+    if subj == ['Q404']:
+        raw.info['bads'].append('A32')
        
 # %% Filtering
     raw.filter(2., 20.)
