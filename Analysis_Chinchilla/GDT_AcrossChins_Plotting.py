@@ -16,6 +16,7 @@ from scipy.stats import sem
 import seaborn as sns
 import pandas as pd
 
+
 plt.switch_backend('QT5Agg')  # Making the plots interactive (Scrollable)
 warnings.filterwarnings('ignore')
 warnings.simplefilter('ignore')
@@ -36,82 +37,122 @@ subjlist = ['Q351', 'Q363', 'Q364', 'Q365', 'Q368',
 dat = pd.read_csv(csv_loc + 'chin_group_age.csv')
 dat0 = dat['Subject'].isin(subjlist)
 dat = dat[dat0]
+        
+#Loading mat files for each subject and loading all the variables 
+data_dict = {}
+for index, row in dat.iterrows():
+    subj = row['Subject']
+    mat_data = io.loadmat(data_loc + subj + '_AllGaps_2-20Hz.mat', squeeze_me=True)
 
-subject_to_group = dict(zip(dat['Subject'], dat['Group']))
+    data_dict[subj] = { 'picks' : mat_data['picks'],
+                        'gapcap16' : mat_data['gap_cap16'],
+                        'gapcap32' : mat_data['gap_cap32'],
+                        'gapcap64' : mat_data['gap_cap64'],
+                        'gapground16' : mat_data['gap_ground16'],
+                        'gapground32' : mat_data['gap_ground32'],
+                        'gapground64' : mat_data['gap_ground64'],
+                        'gapmastoid16' : mat_data['gap_mastoid16'],
+                        'gapmastoid32' : mat_data['gap_mastoid32'],
+                        'gapmastoid64' : mat_data['gap_mastoid64'],
+                        'gapvertex16' : mat_data['gap_vertex16'],
+                        'gapvertex32' : mat_data['gap_vertex32'],
+                        'gapvertex64' : mat_data['gap_vertex64'],
+                        'cap16' : mat_data['cap16'],
+                        'cap32' : mat_data['cap32'],
+                        'cap64' : mat_data['cap64'],
+                        'ground16' : mat_data['ground16'],
+                        'ground32' : mat_data['ground32'],
+                        'ground64' : mat_data['ground64'],
+                        'mastoid16' : mat_data['mastoid16'],
+                        'mastoid32' : mat_data['mastoid32'],
+                        'mastoid64' : mat_data['mastoid64'],
+                        'vertex16' : mat_data['vertex16'],
+                        'vertex32' : mat_data['vertex32'],
+                        'vertex64' : mat_data['vertex64'],
+                        't' : mat_data['t'],
+                        't_full' : mat_data['t_full'] }
+                              
+##Organizing mat data by groups 
+grouped_data = {}
+for index, row in dat.iterrows():
+    subj = row['Subject']
+    group = row['Group']
+    if group not in grouped_data:
+        grouped_data[group] = []
+    grouped_data[group].append(data_dict[subj])
 
-# Create dictionaries to group subjects based on group
-groups = {'YNH': [], 'MNH': [], 'TTS': []}
+group_data = {'YNH': [], 'MNH': [], 'TTS': []}
 
-# Categorize subjects from subjlist into groups
-for subject in subjlist:
-    group = subject_to_group.get(subject)
-    if group in groups:
-        groups[group].append(subject)
-    else:
-        print(f"Subject {subject} not found in the data or has an invalid group.")
-
-## Loading subject data -- Let's begin with 16 ms 
-for subj in range(len(subjlist)):
-    sub = subjlist[subj]
-    dat1 = io.loadmat(data_loc + sub + '_16ms_2-20Hz.mat', squeeze_me=True)
-    dat1.keys()
-    t = dat1['t']  # For gap responses only 
-    t_full = dat1['t_full'] #For full 2 second responses 
+for group, data_list in grouped_data.items():
+    for data in data_list: 
+        gapcap16_mean = data['gapcap16'].mean(axis=0)
+        gapcap32_mean = data['gapcap32'].mean(axis=0)
+        gapcap64_mean = data['gapcap64'].mean(axis=0)
+        cap16_mean = data['cap16'].mean(axis=0)
+        cap32_mean = data['cap32'].mean(axis=0)
+        cap64_mean = data['cap64'].mean(axis=0)  
+        
+        group_data[group].append(gapcap16_mean)
+        group_data[group].append(gapcap32_mean)
+        group_data[group].append(gapcap64_mean)
+        group_data[group].append(cap16_mean)
+        group_data[group].append(cap32_mean)
+        group_data[group].append(cap64_mean)
     
-#%% Getting data from individual mat files for each gap condition -- Starting with 16 ms
-
+#%% Getting data from individual mat files across gap conditions 
 # Initialize empty lists to store data for different conditions and age groups
-gap16_cap = []
-gap16_mastoid = []
-gap16_vertex = []
-gap16_ground = []
-evoked16_cap = []
-evoked16_mastoid = []
-evoked16_vertex = []
-evoked16_ground = []
+gapcap16 = []
+gapmastoid16 = []
+gapvertex16 = []
+gapground16 = []
+evokedcap16 = []
+evokedmastoid16 = []
+evokedvertex16 = []
+evokedground16 = []
 
-for group in groups:
-    group_gap16cap = []  # Initialize lists for each condition and age group
-    group_gap16mastoid = []
-    group_gap16vertex = []
-    group_gap16ground = []
-    group_evoked16cap = []  
-    group_evoked16mastoid = []
-    group_evoked16vertex = []
-    group_evoked16ground = []
+# for group in groups:
+group_gap16cap = []  # Initialize lists for each condition and age group
+group_gap16mastoid = []
+group_gap16vertex = []
+group_gap16ground = []
+group_evoked16cap = []  
+group_evoked16mastoid = []
+group_evoked16vertex = []
+group_evoked16ground = []
 
-    for column in dat:
-        dat1 = io.loadmat(data_loc + sub + '_16ms_2-20Hz.mat', squeeze_me=True)
-        dat1.keys()
-        picks = dat1['picks']
-        gap16cap = dat1['gap_cap']
-        gap16mastoid = dat1['gap_mastoid']
-        gap16vertex = dat1['gap_vertex']
-        gap16ground = dat1['gap_ground']
-        evoked16cap = dat1['ep_all']
-        evoked16mastoid = dat1['ep_mastoid']
-        evoked16vertex = dat1['ep_vertex']
-        evoked16ground = dat1['ep_ground']
+for index, column in dat.iterrows():
+    subj = column['Subject']
+    dat1 = io.loadmat(data_loc + subj + '_AllGaps_2-20Hz.mat', squeeze_me=True)
+    dat1.keys()
+    picks = dat1['picks']
+    gap16cap = dat1['gap_cap16']
+    gap16mastoid = dat1['gap_mastoid16']
+    gap16vertex = dat1['gap_vertex16']
+    gap16ground = dat1['gap_ground16']
+    # evoked16cap = dat1['ep_all']
+    # evoked16mastoid = dat1['ep_mastoid']
+    # evoked16vertex = dat1['ep_vertex']
+    # evoked16ground = dat1['ep_ground']
 
-        group_gap16cap.append(gap16cap.mean(axis=0))
-        group_gap16mastoid.append(gap16mastoid.mean(axis=0))
-        group_gap16vertex.append(gap16vertex.mean(axis=0))
-        group_gap16ground.append(gap16ground.mean(axis=0))
-        group_evoked16cap.append(evoked16cap.mean(axis=0))  
-        group_evoked16mastoid.append(evoked16mastoid.mean(axis=0))
-        group_evoked16vertex.append(evoked16vertex.mean(axis=0))
-        group_evoked16ground.append(evoked16ground.mean(axis=0))
+    group_gap16cap.append(gap16cap.mean(axis=0))
+    group_gap16mastoid.append(gap16mastoid.mean(axis=0))
+    group_gap16vertex.append(gap16vertex.mean(axis=0))
+    group_gap16ground.append(gap16ground.mean(axis=0))
+    # group_evoked16cap.append(evoked16cap.mean(axis=0))  
+    # group_evoked16mastoid.append(evoked16mastoid.mean(axis=0))
+    # group_evoked16vertex.append(evoked16vertex.mean(axis=0))
+    # group_evoked16ground.append(evoked16ground.mean(axis=0))
 
-    # Append data for each age group to lists
-    gap16_cap.append(group_gap16cap)
-    gap16_mastoid.append(group_gap16mastoid)
-    gap16_vertex.append(group_gap16vertex)
-    gap16_ground.append(group_gap16ground)
-    evoked16_cap.append(group_evoked16cap)
-    evoked16_mastoid.append(group_evoked16mastoid)
-    evoked16_vertex.append(group_evoked16vertex)
-    evoked16_ground.append(group_evoked16ground)
-    
+# Append data for each age group to lists
+# gap16cap.append(group_gap16cap)
+# gap16_mastoid.append(group_gap16mastoid)
+# gap16_vertex.append(group_gap16vertex)
+# gap16_ground.append(group_gap16ground)
+# evoked16_cap.append(group_evoked16cap)
+# evoked16_mastoid.append(group_evoked16mastoid)
+# evoked16_vertex.append(group_evoked16vertex)
+# evoked16_ground.append(group_evoked16ground)
+
 #%% 32ms Gap 
 
 # Initialize empty lists to store data for different conditions and age groups
