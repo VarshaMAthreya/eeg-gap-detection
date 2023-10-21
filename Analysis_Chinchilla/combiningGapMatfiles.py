@@ -41,19 +41,19 @@ for subj in range(len(subjlist)):
     vertex32 = dat2['ep_vertex']
     ground32= dat2['ep_ground']
     cap32 = dat2['ep_all']
-    gap_mastoid32 = dat1['gap_mastoid']
-    gap_vertex32 = dat1['gap_vertex']
-    gap_ground32= dat1['gap_ground']
-    gap_cap32 = dat1['gap_cap']
+    gap_mastoid32 = dat2['gap_mastoid']
+    gap_vertex32 = dat2['gap_vertex']
+    gap_ground32= dat2['gap_ground']
+    gap_cap32 = dat2['gap_cap']
     
     mastoid64 = dat3['ep_mastoid']
     vertex64 = dat3['ep_vertex']
     ground64= dat3['ep_ground']
     cap64 = dat3['ep_all']
-    gap_mastoid64 = dat1['gap_mastoid']
-    gap_vertex64 = dat1['gap_vertex']
-    gap_ground64= dat1['gap_ground']
-    gap_cap64 = dat1['gap_cap']
+    gap_mastoid64 = dat3['gap_mastoid']
+    gap_vertex64 = dat3['gap_vertex']
+    gap_ground64= dat3['gap_ground']
+    gap_cap64 = dat3['gap_cap']
 
     mat_ids = dict(mastoid16 = mastoid16,  vertex16 = vertex16, ground16= ground16, cap16 = cap16, 
                gap_mastoid16 = gap_mastoid16, gap_vertex16 = gap_vertex16, gap_ground16= gap_ground16, gap_cap16 = gap_cap16, 

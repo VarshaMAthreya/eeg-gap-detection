@@ -12,7 +12,7 @@ import warnings
 from matplotlib import pyplot as plt
 from scipy import io
 import numpy as np
-from scipy.stats import sem
+import scipy.stats as stats
 import seaborn as sns
 import pandas as pd
 
@@ -25,7 +25,7 @@ plt.rcParams["figure.figsize"] = (5.5,5)
 plt.rcParams['figure.dpi'] = 120
 
 # %%Setting up stuff
-fig_loc = 'C:/Users/vmysorea/Desktop/PhD/Stim_Analysis/MTB_Analysis/GreenLight/'
+fig_loc = 'C:/Users/vmysorea/Desktop/PhD/Stim_Analysis/MTB_Analysis/FinalThesis/'
 data_loc = 'D:/PhD/Data/Chin_Data/AnalyzedGDT_matfiles/'
 csv_loc = 'C:/Users/vmysorea/Desktop/PhD/Stim_Analysis/MTB_Analysis/'
 
@@ -43,6 +43,10 @@ data_dict = {}
 for index, row in dat.iterrows():
     subj = row['Subject']
     mat_data = io.loadmat(data_loc + subj + '_AllGaps_2-20Hz.mat', squeeze_me=True)
+    
+    selected_rows = [0, 2, 4]  # Specify the rows you want to include
+    gapcap16_mean = np.mean(mat_data['gap_cap16'][selected_rows], axis=0)
+
 
     data_dict[subj] = { 'picks' : mat_data['picks'],
                         'gapcap16' : mat_data['gap_cap16'],
@@ -80,134 +84,72 @@ for index, row in dat.iterrows():
     if group not in grouped_data:
         grouped_data[group] = []
     grouped_data[group].append(data_dict[subj])
+       
+#%% Plotting 
 
-group_data = {'YNH': [], 'MNH': [], 'TTS': []}
+sns.set_palette ("Dark2")
 
-for group, data_list in grouped_data.items():
-    for data in data_list: 
-        gapcap16_mean = data['gapcap16'].mean(axis=0)
-        gapcap32_mean = data['gapcap32'].mean(axis=0)
-        gapcap64_mean = data['gapcap64'].mean(axis=0)
-        cap16_mean = data['cap16'].mean(axis=0)
-        cap32_mean = data['cap32'].mean(axis=0)
-        cap64_mean = data['cap64'].mean(axis=0)  
-        
-        group_data[group].append(gapcap16_mean)
-        group_data[group].append(gapcap32_mean)
-        group_data[group].append(gapcap64_mean)
-        group_data[group].append(cap16_mean)
-        group_data[group].append(cap32_mean)
-        group_data[group].append(cap64_mean)
+variable_sets = ['cap16', 'cap32', 'cap64']
+
+groups = ['YNH', 'MNH', 'TTS']
+
+t = data_dict[subjlist[0]]['t_full']
+
+# Create a single plot with three subplots for each group, within each subplot, plot all three gap conditions 
+fig, ax = plt.subplots(len(groups), 1, sharex=True, sharey=True, figsize=(8,6))
+fig.suptitle('GDT | Light Sedation - EEG Cap', fontsize=16)
+fig.subplots_adjust(top=0.99, hspace=0.35)
+
+gaps = ['16 ms', '32 ms', '64 ms']
+
+for i, group in enumerate(groups):
+    ax[i].set_title(f'{group}', fontsize=12)
+
+    variable_data = []
+
+    for subj in grouped_data[group]:
+        # List to store the variable data for the current subject
+        subj_variable_data = []
+
+        for variable in variable_sets:
+            subj_variable_data.append(subj[variable])
+
+        variable_data.append(subj_variable_data)
+
+    # Calculate the mean within each chin, and across chins for each variable in the current group
+    variable_means = [np.mean((np.mean(variable, axis=0)*1e6),axis=0) for variable in variable_data]
+    variable_sems = [stats.sem((np.mean(variable, axis=0)*1e6), axis=0) for variable in variable_data]
+
+    # Plot the variables on the current subplot
+    for mean, sem, variable, gap in zip(variable_means, variable_sems, variable_sets, gaps):
+        ax[i].plot(t, mean, label= gap)
+        ax[i].fill_between(t, (mean - sem), (mean + sem), alpha=0.3)
+
+    ax[i].set_xlim(-0.2,2.1)
+    ax[i].set_ylim(-3.2,2.3)
+    ax[i].grid()
     
-#%% Getting data from individual mat files across gap conditions 
-# Initialize empty lists to store data for different conditions and age groups
-gapcap16 = []
-gapmastoid16 = []
-gapvertex16 = []
-gapground16 = []
-evokedcap16 = []
-evokedmastoid16 = []
-evokedvertex16 = []
-evokedground16 = []
+    # Labeling the stim on, off, gap trigger 
+    for x_value in (0, 2) :
+        ax[i].axvline(x=x_value, color='black', linestyle='--', alpha=1)
+           
+    ax[i].axvline(x=1, color='blue', linestyle='--', alpha=1)
+    
+y_limits = ax[0].get_ylim()
+labels = ["Stim On", "Gap", "Stim Off"]
+for x, label in zip([0,1,2], labels):
+    ax[0].text(x, y_limits[1] + 0.05e-4, label, ha='center',weight='bold')
+        
+ax[0].legend(loc='upper right')
 
-# for group in groups:
-group_gap16cap = []  # Initialize lists for each condition and age group
-group_gap16mastoid = []
-group_gap16vertex = []
-group_gap16ground = []
-group_evoked16cap = []  
-group_evoked16mastoid = []
-group_evoked16vertex = []
-group_evoked16ground = []
+plt.xlabel('Time (s)', fontsize=12)
+ax[1].set_ylabel('Amplitude (\u03bcV)', fontsize=12)
 
-for index, column in dat.iterrows():
-    subj = column['Subject']
-    dat1 = io.loadmat(data_loc + subj + '_AllGaps_2-20Hz.mat', squeeze_me=True)
-    dat1.keys()
-    picks = dat1['picks']
-    gap16cap = dat1['gap_cap16']
-    gap16mastoid = dat1['gap_mastoid16']
-    gap16vertex = dat1['gap_vertex16']
-    gap16ground = dat1['gap_ground16']
-    # evoked16cap = dat1['ep_all']
-    # evoked16mastoid = dat1['ep_mastoid']
-    # evoked16vertex = dat1['ep_vertex']
-    # evoked16ground = dat1['ep_ground']
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+plt.show()
 
-    group_gap16cap.append(gap16cap.mean(axis=0))
-    group_gap16mastoid.append(gap16mastoid.mean(axis=0))
-    group_gap16vertex.append(gap16vertex.mean(axis=0))
-    group_gap16ground.append(gap16ground.mean(axis=0))
-    # group_evoked16cap.append(evoked16cap.mean(axis=0))  
-    # group_evoked16mastoid.append(evoked16mastoid.mean(axis=0))
-    # group_evoked16vertex.append(evoked16vertex.mean(axis=0))
-    # group_evoked16ground.append(evoked16ground.mean(axis=0))
+plt.savefig(fig_loc + "GDT_LightSedation_AcrossChins_Full2sec.png", dpi=500, bbox_inches="tight")
 
-# Append data for each age group to lists
-# gap16cap.append(group_gap16cap)
-# gap16_mastoid.append(group_gap16mastoid)
-# gap16_vertex.append(group_gap16vertex)
-# gap16_ground.append(group_gap16ground)
-# evoked16_cap.append(group_evoked16cap)
-# evoked16_mastoid.append(group_evoked16mastoid)
-# evoked16_vertex.append(group_evoked16vertex)
-# evoked16_ground.append(group_evoked16ground)
-
-#%% 32ms Gap 
-
-# Initialize empty lists to store data for different conditions and age groups
-gap32_cap = []
-gap32_mastoid = []
-gap32_vertex = []
-gap32_ground = []
-evoked32_cap = []
-evoked32_mastoid = []
-evoked32_vertex = []
-evoked32_ground = []
-
-for group in groups:
-    group_gap32cap = []  # Initialize lists for each condition and age group
-    group_gap32mastoid = []
-    group_gap32vertex = []
-    group_gap32ground = []
-    group_evoked32cap = []  
-    group_evoked32mastoid = []
-    group_evoked32vertex = []
-    group_evoked32ground = []
-
-    for column in dat:
-        dat1 = io.loadmat(data_loc + sub + '_32ms_2-20Hz.mat', squeeze_me=True)
-        dat1.keys()
-        picks = dat1['picks']
-        gap32cap = dat1['gap_cap']
-        gap32mastoid = dat1['gap_mastoid']
-        gap32vertex = dat1['gap_vertex']
-        gap32ground = dat1['gap_ground']
-        evoked32cap = dat1['ep_all']
-        evoked32mastoid = dat1['ep_mastoid']
-        evoked32vertex = dat1['ep_vertex']
-        evoked32ground = dat1['ep_ground']
-
-        group_gap32cap.append(gap32cap.mean(axis=0))
-        group_gap32mastoid.append(gap32mastoid.mean(axis=0))
-        group_gap32vertex.append(gap32vertex.mean(axis=0))
-        group_gap32ground.append(gap32ground.mean(axis=0))
-        group_evoked32cap.append(evoked32cap.mean(axis=0))  
-        group_evoked32mastoid.append(evoked32mastoid.mean(axis=0))
-        group_evoked32vertex.append(evoked32vertex.mean(axis=0))
-        group_evoked32ground.append(evoked32ground.mean(axis=0))
-
-    # Append data for each age group to lists
-    gap32_cap.append(group_gap32cap)
-    gap32_mastoid.append(group_gap32mastoid)
-    gap32_vertex.append(group_gap32vertex)
-    gap32_ground.append(group_gap32ground)
-    evoked32_cap.append(group_evoked32cap)
-    evoked32_mastoid.append(group_evoked32mastoid)
-    evoked32_vertex.append(group_evoked32vertex)
-    evoked32_ground.append(group_evoked32ground)
-
-#%% 64 ms 
 
 gap64_cap = []
 gap64_mastoid = []
@@ -259,217 +201,6 @@ for group in groups:
     evoked64_mastoid.append(group_evoked64mastoid)
     evoked64_vertex.append(group_evoked64vertex)
     evoked64_ground.append(group_evoked64ground)
-
-
-#%%Loading mat files -- Need to work on this later
-
-subjlist_ynh = ['Q412', 'Q422', 'Q424', 'Q426', 'Q428'] 
-
-for subj in range(len(subjlist_ynh)):
-    sub = subjlist_ynh[subj]
-    dat1 = io.loadmat(data_loc + sub + '_16ms_2-20Hz.mat', squeeze_me=True)
-    dat2 = io.loadmat(data_loc + sub + '_32ms_2-20Hz.mat', squeeze_me=True)
-    dat3 = io.loadmat(data_loc + sub + '_64ms_2-20Hz.mat', squeeze_me=True)
-
-    dat1.keys()
-    dat2.keys()
-    dat3.keys()
-    
-    ynh_ep_mastoid16 = dat1['ep_mastoid']
-    ynh_ep_vertex16 = dat1['ep_vertex']
-    ynh_ep_ground16= dat1['ep_ground']
-    ynh_ep_all16 = dat1['ep_all']
-    # ynh_ep_mean16 = (dat1['ep_mean'])*1e6
-    # ynh_ep_sem16 = (dat1['ep_sem'])*1e6
-    # ynh_ep_subderm16 = dat1['ep_subderm']
-    # ynh_ep_mean_subderm16 = dat1['ep_mean_subderm']
-    # ynh_ep_sem_subderm16 = dat1['ep_sem_subderm']
-    picks= dat1['picks']
-    t=dat1['t']
-    t_full=dat1['t_full']
-    
-    ynh_ep_mastoid32 = dat2['ep_mastoid']
-    ynh_ep_vertex32 = dat2['ep_vertex']
-    ynh_ep_ground32= dat2['ep_ground']
-    ynh_ep_all32 = dat2['ep_all']
-    # ynh_ep_mean32 = (dat2['ep_mean'])*1e6
-    # ynh_ep_sem32 = (dat2['ep_sem'])*1e6
-    # ynh_ep_subderm32 = dat2['ep_subderm']
-    # ynh_ep_mean_subderm32 = dat2['ep_mean_subderm']
-    # ynh_ep_sem_subderm32 = dat2['ep_sem_subderm']
-    
-    ynh_ep_mastoid64 = dat3['ep_mastoid']
-    ynh_ep_vertex64 = dat3['ep_vertex']
-    ynh_ep_ground64= dat3['ep_ground']
-    ynh_ep_all64 = dat3['ep_all']
-    # ynh_ep_mean64 = (dat3['ep_mean'])*1e6
-    # ynh_ep_sem64 = (dat3['ep_sem'])*1e6
-    # ynh_ep_subderm64 = dat3['ep_subderm']
-    # ynh_ep_mean_subderm64 = dat3['ep_mean_subderm']
-    # ynh_ep_sem_subderm64 = dat3['ep_sem_subderm']
-    
-ynh_vertex16 = ynh_ep_vertex16.mean(axis=0)
-ynh_vertex_sem16 = ynh_ep_vertex16.std(axis=0) / np.sqrt(ynh_ep_vertex16.shape[0])
-ynh_mastoid16 = ynh_ep_mastoid16.mean(axis=0)
-ynh_mastoid_sem16 = ynh_ep_mastoid16.std(axis=0) / np.sqrt(ynh_ep_mastoid16.shape[0])
-
-ynh_vertex32 = ynh_ep_vertex32.mean(axis=0)
-ynh_vertex_sem32 = ynh_ep_vertex32.std(axis=0) / np.sqrt(ynh_ep_vertex32.shape[0])
-ynh_mastoid32 = ynh_ep_mastoid32.mean(axis=0)
-ynh_mastoid_sem32 = ynh_ep_mastoid32.std(axis=0) / np.sqrt(ynh_ep_mastoid32.shape[0])
-
-ynh_vertex64 = ynh_ep_vertex64.mean(axis=0)
-ynh_vertex_sem64 = ynh_ep_vertex64.std(axis=0) / np.sqrt(ynh_ep_vertex64.shape[0])
-ynh_mastoid64 = ynh_ep_mastoid64.mean(axis=0)
-ynh_mastoid_sem64 = ynh_ep_mastoid64.std(axis=0) / np.sqrt(ynh_ep_mastoid64.shape[0])
-
-ynh_ep_mean16 = ynh_ep_all16.mean(axis=0)
-ynh_ep_sem16 = ynh_ep_all16.std(axis=0) / np.sqrt(ynh_ep_all16.shape[0])
-
-ynh_ep_mean32 = ynh_ep_all32.mean(axis=0)
-ynh_ep_sem32 = ynh_ep_all32.std(axis=0) / np.sqrt(ynh_ep_all32.shape[0])
-
-ynh_ep_mean64 = ynh_ep_all64.mean(axis=0)
-ynh_ep_sem64 = ynh_ep_all64.std(axis=0) / np.sqrt(ynh_ep_all64.shape[0])
-
-#%%##MNH 
-subjlist_mnh = ['Q351', 'Q363', 'Q364', 'Q365', 'Q368']
-            
-for subj in range(len(subjlist_mnh)):
-    sub = subjlist_mnh[subj]
-    dat1 = io.loadmat(data_loc + sub + '_16ms_2-20Hz.mat', squeeze_me=True)
-    dat2 = io.loadmat(data_loc + sub + '_32ms_2-20Hz.mat', squeeze_me=True)
-    dat3 = io.loadmat(data_loc + sub + '_64ms_2-20Hz.mat', squeeze_me=True)
-
-    dat1.keys()
-    dat2.keys()
-    dat3.keys()
-    
-    mnh_ep_mastoid16 = dat1['ep_mastoid']
-    mnh_ep_vertex16 = dat1['ep_vertex']
-    mnh_ep_ground16= dat1['ep_ground']
-    mnh_ep_all16 = dat1['ep_all']
-    # mnh_ep_mean16 = dat1['ep_mean']
-    # mnh_ep_sem16 = dat1['ep_sem']
-    # mnh_ep_subderm16 = dat1['ep_subderm']
-    # mnh_ep_mean_subderm16 = dat1['ep_mean_subderm']
-    # mnh_ep_sem_subderm16 = dat1['ep_sem_subderm']
-    picks= dat1['picks']
-    t=dat1['t']
-    
-    mnh_ep_mastoid32 = dat2['ep_mastoid']
-    mnh_ep_vertex32 = dat2['ep_vertex']
-    mnh_ep_ground32= dat2['ep_ground']
-    mnh_ep_all32 = dat2['ep_all']
-    # mnh_ep_mean32 = dat2['ep_mean']
-    # mnh_ep_sem32 = dat2['ep_sem']
-    # mnh_ep_subderm32 = dat2['ep_subderm']
-    # mnh_ep_mean_subderm32 = dat2['ep_mean_subderm']
-    # mnh_ep_sem_subderm32 = dat2['ep_sem_subderm']
-    
-    mnh_ep_mastoid64 = dat3['ep_mastoid']
-    mnh_ep_vertex64 = dat3['ep_vertex']
-    mnh_ep_ground64= dat3['ep_ground']
-    mnh_ep_all64 = dat3['ep_all']
-    # mnh_ep_mean64 = dat3['ep_mean']
-    # mnh_ep_sem64 = dat3['ep_sem']
-    # mnh_ep_subderm64 = dat3['ep_subderm']
-    # mnh_ep_mean_subderm64 = dat3['ep_mean_subderm']
-    # mnh_ep_sem_subderm64 = dat3['ep_sem_subderm']
-    
-mnh_vertex16 = mnh_ep_vertex16.mean(axis=0)
-mnh_vertex_sem16 = mnh_ep_vertex16.std(axis=0) / np.sqrt(mnh_ep_vertex16.shape[0])
-mnh_mastoid16 = mnh_ep_mastoid16.mean(axis=0)
-mnh_mastoid_sem16 = mnh_ep_mastoid16.std(axis=0) / np.sqrt(mnh_ep_mastoid16.shape[0])
-
-mnh_vertex32 = mnh_ep_vertex32.mean(axis=0)
-mnh_vertex_sem32 = mnh_ep_vertex32.std(axis=0) / np.sqrt(mnh_ep_vertex32.shape[0])
-mnh_mastoid32 = mnh_ep_mastoid32.mean(axis=0)
-mnh_mastoid_sem32 = mnh_ep_mastoid32.std(axis=0) / np.sqrt(mnh_ep_mastoid32.shape[0])
-
-mnh_vertex64 = mnh_ep_vertex64.mean(axis=0)
-mnh_vertex_sem64 = mnh_ep_vertex64.std(axis=0) / np.sqrt(mnh_ep_vertex64.shape[0])
-mnh_mastoid64 = mnh_ep_mastoid64.mean(axis=0)
-mnh_mastoid_sem64 = mnh_ep_mastoid64.std(axis=0) / np.sqrt(mnh_ep_mastoid64.shape[0])
-
-mnh_ep_mean16 = mnh_ep_all16.mean(axis=0)
-mnh_ep_sem16 = mnh_ep_all16.std(axis=0) / np.sqrt(mnh_ep_all16.shape[0])
-
-mnh_ep_mean32 = mnh_ep_all32.mean(axis=0)
-mnh_ep_sem32 = mnh_ep_all32.std(axis=0) / np.sqrt(mnh_ep_all32.shape[0])
-
-mnh_ep_mean64 = mnh_ep_all64.mean(axis=0)
-mnh_ep_sem64 = mnh_ep_all64.std(axis=0) / np.sqrt(mnh_ep_all64.shape[0])
-
-
-#%%##TTS
-subjlist_tts = ['Q402', 'Q404', 'Q406', 'Q407', 'Q410']
-
-for subj in range(len(subjlist_tts)):
-    sub = subjlist_tts[subj]
-    dat1 = io.loadmat(data_loc + sub + '_16ms_2-20Hz.mat', squeeze_me=True)
-    dat2 = io.loadmat(data_loc + sub + '_32ms_2-20Hz.mat', squeeze_me=True)
-    dat3 = io.loadmat(data_loc + sub + '_64ms_2-20Hz.mat', squeeze_me=True)
-
-    dat1.keys()
-    dat2.keys()
-    dat3.keys()
-    
-    tts_ep_mastoid16 = dat1['ep_mastoid']
-    tts_ep_vertex16 = dat1['ep_vertex']
-    tts_ep_ground16= dat1['ep_ground']
-    tts_ep_all16 = dat1['ep_all']
-    # tts_ep_mean16 = dat1['ep_mean']
-    # tts_ep_sem16 = dat1['ep_sem']
-    # tts_ep_subderm16 = dat1['ep_subderm']
-    # tts_ep_mean_subderm16 = dat1['ep_mean_subderm']
-    # tts_ep_sem_subderm16 = dat1['ep_sem_subderm']
-    # picks= dat1['picks']
-    # t=dat1['t']
-    
-    tts_ep_mastoid32 = dat2['ep_mastoid']
-    tts_ep_vertex32 = dat2['ep_vertex']
-    tts_ep_ground32= dat2['ep_ground']
-    tts_ep_all32 = dat2['ep_all']
-    # tts_ep_mean32 = dat2['ep_mean']
-    # tts_ep_sem32 = dat2['ep_sem']
-    # tts_ep_subderm32 = dat2['ep_subderm']
-    # tts_ep_mean_subderm32 = dat2['ep_mean_subderm']
-    # tts_ep_sem_subderm32 = dat2['ep_sem_subderm']
-    
-    tts_ep_mastoid64 = dat3['ep_mastoid']
-    tts_ep_vertex64 = dat3['ep_vertex']
-    tts_ep_ground64= dat3['ep_ground']
-    tts_ep_all64 = dat3['ep_all']
-    # tts_ep_mean64 = dat3['ep_mean']
-    # tts_ep_sem64 = dat3['ep_sem']
-    # tts_ep_subderm64 = dat3['ep_subderm']
-    # tts_ep_mean_subderm64 = dat3['ep_mean_subderm']
-    # tts_ep_sem_subderm64 = dat3['ep_sem_subderm']
-    
-tts_vertex16 = tts_ep_vertex16.mean(axis=0)
-tts_vertex_sem16 = tts_ep_vertex16.std(axis=0) / np.sqrt(tts_ep_vertex16.shape[0])
-tts_mastoid16 = tts_ep_mastoid16.mean(axis=0)
-tts_mastoid_sem16 = tts_ep_mastoid16.std(axis=0) / np.sqrt(tts_ep_mastoid16.shape[0])
-
-tts_vertex32 = tts_ep_vertex32.mean(axis=0)
-tts_vertex_sem32 = tts_ep_vertex32.std(axis=0) / np.sqrt(tts_ep_vertex32.shape[0])
-tts_mastoid32 = tts_ep_mastoid32.mean(axis=0)
-tts_mastoid_sem32 = tts_ep_mastoid32.std(axis=0) / np.sqrt(tts_ep_mastoid32.shape[0])
-
-tts_vertex64 = tts_ep_vertex64.mean(axis=0)
-tts_vertex_sem64 = tts_ep_vertex64.std(axis=0) / np.sqrt(tts_ep_vertex64.shape[0])
-tts_mastoid64 = tts_ep_mastoid64.mean(axis=0)
-tts_mastoid_sem64 = tts_ep_mastoid64.std(axis=0) / np.sqrt(tts_ep_mastoid64.shape[0])
-
-tts_ep_mean16 = tts_ep_all16.mean(axis=0)
-tts_ep_sem16 = tts_ep_all16.std(axis=0) / np.sqrt(tts_ep_all16.shape[0])
-
-tts_ep_mean32 = tts_ep_all32.mean(axis=0)
-tts_ep_sem32 = tts_ep_all32.std(axis=0) / np.sqrt(tts_ep_all32.shape[0])
-
-tts_ep_mean64 = tts_ep_all64.mean(axis=0)
-tts_ep_sem64 = tts_ep_all64.std(axis=0) / np.sqrt(tts_ep_all64.shape[0])
 
 #%%##Plotting 
 
