@@ -26,7 +26,7 @@ plt.rc('xtick', labelsize=11)
 plt.rc('ytick', labelsize=8)
 
 # %%Setting up stuff
-fig_loc = 'C:/Users/vmysorea/Desktop/PhD/Stim_Analysis/MTB_Analysis/GreenLight/'
+fig_loc = 'C:/Users/vmysorea/Desktop/PhD/Conferences/ARO 2024/Aging/Figures/'
 data_loc = 'D:/PhD/Stim_Analysis/GapDetection_EEG/AnalyzedFiles_Figures/GDT_matfiles/'
 csv_loc = 'C:/Users/vmysorea/Desktop/PhD/Stim_Analysis/MTB_Analysis/'
 
@@ -135,7 +135,7 @@ for age, groups in age_groups:
     full32_all.append(group_full32)
     full64_all.append(group_full64)
 
-# %%
+# %% Putting the variables in different conditions across age groups 
 conditions = {0: gap16_all,
               1: gap32_all,
               2: gap64_all,
@@ -164,9 +164,9 @@ for condition, evkds_all in conditions.items():
 
 # %% Subplots across conditions, with individual age plots
 
-condition_names = { 0: 'Gap 16 ms',
-                    1: 'Gap 32 ms',
-                    2: 'Gap 64 ms',
+condition_names = { 0: '16 ms',
+                    1: '32 ms',
+                    2: '64 ms',
                     3: 'ITC 16 ms',
                     4: 'ITC 32 ms',
                     5: 'ITC 64 ms',
@@ -179,8 +179,8 @@ condition_names = { 0: 'Gap 16 ms',
 #                     'MNH': 'Middle (36-55 y)',
 #                     'ONH': 'Old (>=56 y)'}
 
-age_group_labels = {'YNH': 'Young (<=40 y)',
-                    'ONH': 'Old (>41 y)'}
+age_group_labels = {'YNH': 'YNH (<=40 y)',
+                    'ONH': 'ONH (>=41 y)'}
 
 cond_groups = [(0,1,2)]
 
@@ -189,17 +189,17 @@ sns.set_palette("Dark2")
 
 # Create a figure with 3 horizontal subplots
 for cond in cond_groups:
-    fig, axs = plt.subplots(2, 1, figsize=(5.5,5), sharex= True)
+    fig, axs = plt.subplots(2, 1, figsize=(10,8), sharex= True, sharey=True)
     
 # Iterate through age groups
     for age_group_index, age_group in enumerate(age_group_labels.keys()):
 
         ax = axs[age_group_index]
         N = age_groups['age_group'].count()[age_group]
-        ax.set_title(f'{age_group_labels[age_group]} (N={N})', fontsize=11)
+        ax.set_title(f'{age_group_labels[age_group]} (N={N})', fontsize=22)
 
         # Iterate through conditions
-        # legend_text=[]
+        
         for condition in cond:
             mean_age_group = mean_data[condition][age_group_index]
             sem_age_group = sem_data[condition][age_group_index]
@@ -213,23 +213,29 @@ for cond in cond_groups:
             # legend_text.append(f"{age_group} (N={N})")
 
         if age_group_index == 0:
-            ax.legend(loc ='upper right',fontsize = 'xx-small' )
+            ax.legend(loc ='upper right',fontsize = 'x-large' )
 
         # ax.set_ylabel()
         ax.set_ylim(-0.2,0.5)
         ax.set_xlim(-0.1,0.55)
+        ax.tick_params(axis='both', labelsize=14)
         ax.grid()
-        ax.axvline(x=0, color='blue', linestyle='--', alpha=0.7)
         
-        fig.text(0, 0.5, 'Amplitude (\u03bcV)', va='center', rotation='vertical', fontsize=12)
-        plt.xlabel('Time (s)', fontsize =12)
+        y_limits = ax.get_ylim()
+        
+        ax.axvline(x=0, color='blue', linestyle='--', alpha=0.7, linewidth=2)
+        # ax.text(0, y_limits[1] + 0.01, 'Trigger', ha='center')
+        
+        fig.text(-0.02, 0.5, 'Amplitude (\u03bcV)', va='center', rotation='vertical', fontsize=24)
+        plt.xlabel('Time (s)', fontsize=24)
+    
         # fig.suptitle(f'{condition_name}', size=16, y=1.001)
         
-    fig.suptitle('Picks - Cz, Fz, FC1, FC2', x=1, ha='right', fontsize=10)
+    fig.suptitle('Picks - Cz, Fz, FC1, FC2', x=1, ha='right', fontsize=14)
     plt.tight_layout()
     # plt.savefig(fig_loc + f'cond_{cond[0]}_{cond[1]}_1.png', dpi = 500)
     # plt.close()
-    plt.show()  # Show the plot
+    # plt.show()
 
 plt.savefig(fig_loc + 'EvokedGapResponses_AcrossAge.png', dpi=500,bbox_inches="tight")
     
@@ -252,12 +258,12 @@ sns.set_palette("Dark2")
 # Define age group labels
 # age_group_labels = {'YNH': 'Young (<36 y)', 'MNH': 'Middle (36-55 y)', 'ONH': 'Old (>55 y)'}
 
-age_group_labels = {'YNH': 'Young (<=40 y)',
-                    'ONH': 'Old (>41 y)'}
+age_group_labels = {'YNH': 'YNH (<=40 y)',
+                    'ONH': 'ONH (>41 y)'}
 
 # Create a figure with 3 subplots
 
-fig, axs = plt.subplots(2, 1, figsize=(6.5, 5), sharex=True)
+fig, axs = plt.subplots(3, 1, figsize=(6, 5), sharex=True)
 
 # Loop through conditions and plot in subplots
 for condition_index, condition in enumerate([6, 7, 8]):
@@ -285,17 +291,17 @@ for condition_index, condition in enumerate([6, 7, 8]):
 
     # ax.set_ylim(-0.2,0.45)    
     # ax.set_ylim(0.02,0.08)
-    ax.set_xlim(-0.2,0.55)
+    ax.set_xlim(-0.1,0.55)
     ax.grid()
 
 plt.xlabel('Time (s)', fontsize=12)
-fig.text(0, 0.5, 'Amplitude (\u03bcV)', va='center', rotation='vertical', fontsize=12)
+fig.text(0, 0.55, 'Amplitude (\u03bcV)', va='center', rotation='vertical', fontsize=12)
 fig.suptitle('Picks - Cz, Fz, FC1, FC2', x=1, ha='right', fontsize=10)
 fig.tight_layout()
 # plt.subplots_adjust(wspace=0.1,hspace =0.1)
 plt.show()
 
-plt.savefig(fig_loc + 'GDTOnset_AcrossAges_4chan.png', dpi = 500, bbox_inches="tight")
+plt.savefig(fig_loc + 'GDTOnset_AcrossAges.png', dpi = 500, bbox_inches="tight")
 
 
 #%% Plotting each condition separately -- Helpful for full time viewing 
@@ -354,7 +360,7 @@ plt.show()
 
 # plt.savefig(fig_loc + "Binding20_FullTime_AcrossAge.png", dpi=500, bbox_inches="tight")
 
-#%% PLotting one age group, one condition  -- Useful for full time, used now for showing P1, P2 peaks etc. 
+#%% Plotting one age group, one condition  -- Useful for full time, used now for showing P1, P2 peaks etc. 
 condition_names = {0: 'Evoked - Gap 16 ms',
                    1: 'Evoked - Gap 32 ms',
                    2: 'Evoked - Gap 64 ms',
