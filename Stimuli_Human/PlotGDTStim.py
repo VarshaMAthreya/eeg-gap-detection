@@ -14,7 +14,7 @@ plt.rcParams['agg.path.chunksize'] = 10000
 
 
 ###Plotting GDT stim
-dat = io.loadmat('C:/Users/vmysorea/Desktop/PhD/Stim_Analysis/GapDetection_EEG/Stimuli/Human_GDT_EEG/GDT_HumanStim16.mat', 
+dat = io.loadmat('C:/Users/vmysorea/Desktop/PhD/Stim_Analysis/GapDetection_EEG/Stimuli_Human/GDT_HumanStim16.mat', 
                  squeeze_me=True)
 dat1 = io.loadmat('C:/Users/vmysorea/Desktop/PhD/Stim_Analysis/GapDetection_EEG/Stimuli/Human_GDT_EEG/GDT_HumanStim32.mat', 
                  squeeze_me=True)

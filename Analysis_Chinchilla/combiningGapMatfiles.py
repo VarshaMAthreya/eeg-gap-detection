@@ -11,19 +11,21 @@ from scipy.io import savemat
 
 data_loc = 'D:/PhD/Data/Chin_Data/AnalyzedGDT_matfiles/'
 
-subjlist = ['Q351', 'Q363', 'Q364', 'Q365', 'Q368',
-            'Q402', 'Q404', 'Q406', 'Q407', 'Q410',
-            'Q412', 'Q422', 'Q424', 'Q426', 'Q428'] 
+subjlist =  [ 'Q363', 'Q364', 'Q368',
+            'Q402',  'Q406', 'Q407', 
+             'Q424', 'Q426'] 
 
 for subj in range(len(subjlist)):
     sub = subjlist [subj]
     dat1 = io.loadmat(data_loc + sub + '_16ms_2-20Hz.mat', squeeze_me=True)
     dat2 = io.loadmat(data_loc + sub + '_32ms_2-20Hz.mat', squeeze_me=True)
     dat3 = io.loadmat(data_loc + sub + '_64ms_2-20Hz.mat', squeeze_me=True)
+    dat4 = io.loadmat(data_loc + sub + '_LightSedation_NoGap_2-20Hz.mat', squeeze_me=True)
     
     dat1.keys()
     dat2.keys()
     dat3.keys()
+    dat4.keys()
     
     mastoid16 = dat1['ep_mastoid']
     vertex16 = dat1['ep_vertex']
@@ -54,6 +56,15 @@ for subj in range(len(subjlist)):
     gap_vertex64 = dat3['gap_vertex']
     gap_ground64= dat3['gap_ground']
     gap_cap64 = dat3['gap_cap']
+    
+    mastoid = dat4['ep_mastoid']
+    vertex = dat4['ep_vertex']
+    ground= dat4['ep_ground']
+    cap = dat4['ep_all']
+    gap_mastoid = dat4['gap_mastoid']
+    gap_vertex = dat4['gap_vertex']
+    gap_ground= dat4['gap_ground']
+    gap_cap = dat4['gap_cap']
 
     mat_ids = dict(mastoid16 = mastoid16,  vertex16 = vertex16, ground16= ground16, cap16 = cap16, 
                gap_mastoid16 = gap_mastoid16, gap_vertex16 = gap_vertex16, gap_ground16= gap_ground16, gap_cap16 = gap_cap16, 
@@ -61,6 +72,8 @@ for subj in range(len(subjlist)):
                gap_mastoid32 = gap_mastoid32, gap_vertex32 = gap_vertex32, gap_ground32= gap_ground32, gap_cap32 = gap_cap32, 
                mastoid64 = mastoid64,  vertex64 = vertex64, ground64= ground64, cap64 = cap64, 
                gap_mastoid64 = gap_mastoid64, gap_vertex64 = gap_vertex64, gap_ground64= gap_ground64, gap_cap64 = gap_cap64, 
+               mastoid = mastoid,  vertex = vertex, ground= ground, cap = cap, 
+               gap_mastoid = gap_mastoid, gap_vertex = gap_vertex, gap_ground= gap_ground, gap_cap = gap_cap,
                t_full = t_full, t = t, picks = picks)
                
-    savemat(data_loc + sub + '_AllGaps_2-20Hz.mat', mat_ids)
+    savemat(data_loc + sub + '_WithNoGap_2-20Hz.mat', mat_ids)
