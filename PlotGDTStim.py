@@ -1,58 +1,41 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Feb  7 21:53:01 2023
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.io import loadmat, wavfile
 
-@author: vmysorea
-"""
-
-from matplotlib import pyplot as plt
-from scipy.io import savemat
-from scipy import io
-import numpy as np 
-from scipy import stats 
+# Set chunk size for large plots
 plt.rcParams['agg.path.chunksize'] = 10000
-from scipy.io.wavfile import write
 
-fig_loc = 'C:/Users/vmysorea/Desktop/PhD/Conferences/ARO 2024/Chin_miniEEG/'
+# Load the .mat file
+mat_path = 'C:/Users/varsh/Desktop/PhD/FinalPaper/Figures/EEG/Stim/GDT_HumanStim_250.mat'
+data = loadmat(mat_path, squeeze_me=True)
 
-###Plotting GDT stim
-# dat = io.loadmat('D:/PhD/Heinz Lab/VMA_GDT_Chins/VMA_Chin_GDT_EEG/ChinGDTStims_64ms.mat', 
-#                  squeeze_me=True)
-# dat1 = io.loadmat('C:/Users/vmysorea/Desktop/PhD/Stim_Analysis/GapDetection_EEG/Stimuli_Human/GDT_HumanStim32.mat', 
-#                  squeeze_me=True)
-dat2 = io.loadmat('C:/Users/vmysorea/Desktop/PhD/Stim_Analysis/GapDetection_EEG/Stimuli_Human/GDT_HumanStim_250.mat', 
-                  squeeze_me=True)
-# dat.keys()
-# dat1.keys()
-dat2.keys()
-fs = np.int64(dat2['Fs'])
- 
-x2= dat2['x'] 
-x2= np.int64(x2) 
-# x=dat['stims']
-# x= np.pad(dat['x'], (49609,51953))
-# x1= dat1['x'] 
+# Get sampling rate
+fs = int(data['Fs'])  # Ensure it's an integer for plotting and WAV writing
 
-# t=np.arange(x[0].shape[0])/fs
-# t1=np.arange(x1.shape[0])/fs
-t2=np.arange(x2.shape[0])/fs
-t2 = np.int64(t2)
+# Get waveform
+x = data['x']
+x = np.asarray(x, dtype=np.float32)  # Convert to float32 for WAV compatibility
 
-# s = x+x1+x2
+# Create time vector
+t = np.arange(len(x)) / fs
 
-plt.plot(t2,x2, color='dimgrey')
-plt.axvline(1.064, linestyle='dashed',color='blue', linewidth=3)
-# plt.axvline(1.128, linestyle='dashed',color='blue', linewidth=2)
-# plt.axvline(1.692, linestyle='dashed',color='blue', linewidth=2)
-plt.ylabel('Stim Amplitude', fontsize=26)
-plt.xlabel('Time (in s)', fontsize = 26)
-# plt.title('Example of 64 ms Gap Trial', fontsize=22)
-plt.text(0.8,0.29, '64 ms', fontsize=25, color='blue', weight='bold')
+# Plotting
+plt.figure(figsize=(10, 4))
+plt.plot(t, x, color='dimgrey')
+plt.axvline(0.564, linestyle='dashed', color='blue', linewidth=3)
+plt.axvline(1.128, linestyle='dashed', color='blue', linewidth=3)
+plt.axvline(1.692, linestyle='dashed', color='blue', linewidth=3)
+plt.text(0.45, 0.3, 'Trigger', fontsize=18, color='blue', weight='bold')
+plt.xlabel('Time (in s)', fontsize=22)
+plt.ylabel('Stim Amplitude', fontsize=22)
 plt.xticks(fontsize=20)
-plt.yticks([],[])
+# plt.xlim(0,2)
+plt.yticks([], [])  # Hide y-axis ticks
 plt.tight_layout()
 plt.show()
 
-write('C:/Users/vmysorea/Desktop/PhD/Stim_Analysis/GapDetection_EEG/Stimuli_Human/GDTHuman_64ms.wav', fs, x2)
+# Save as WAV file
+# wavfile.write('C:/Users/varsh/Desktop/PhD/FinalPaper/Figures/EEG/Stim/GDTHuman_64ms.wav', fs, x)
 
-plt.savefig(fig_loc + 'ChinExample64ms.png',dpi=500, width=6, height=5, transparent=True)
+# Save figure (Note: put after plt.show() if you want to see it before saving)
+plt.savefig('C:/Users/varsh/Desktop/PhD/FinalPaper/Figures/EEG/Stim/GDTHuman_64ms.png', dpi=500, transparent=True)
